@@ -1,0 +1,13 @@
+{
+    "name": "默认主题",
+    "slug": "default",
+    "author": "Gblog",
+    "author_uri": "",
+    "description": "清爽浅色卡片式主题，分区展示各栏目最新内容。",
+    "version": "1.1.0",
+    "tags": ["默认", "首页", "卡片", "清新"],
+    "screenshot": "screenshot.png",
+    "parent": "",
+    "home_mode": "aggregate",
+    "supports": ["sidebar", "dark-mode", "custom-css"]
+}

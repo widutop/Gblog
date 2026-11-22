@@ -1,0 +1,131 @@
+# ============================================================
+# 伪静态（后台「基础设置 → 启用伪静态 / 伪静态形态」）
+# 干净 URL → 现有 ?do= 路由；原始 index.php?do= 直链始终可用（关掉开关即回退）。
+# 注意：以下 rewrite 在 server 级生效；保留原始查询串（分页 / 搜索词）用 $args 透传。
+# ============================================================
+# 内容页三种形态（前台出链由 PHP 决定，服务端三种同时认，切换无需 reload）：
+#   s1  /post/101.html          栏目目录 + 纯 id
+#   s2  /post/20261114101.html  栏目目录 + 发布日期 8 位 + id（日期由 content.php 剥离）
+#   s3  /post-101.html          顶级 栏目-id
+# 前缀 = 所属栏目 slug：内置栏目是 post/soft/music/image/novel（与旧 type 前缀一致），
+# 自建栏目用自身 slug（如 ganwu/101.html、ganwu-101.html、ganwu/20261114101.html）。
+# 内容 id 全局唯一（文章/歌曲共用 content_ids），服务端只按 id 唯一定位，前缀仅作可读性，
+# 不校验归属：栏目改 slug 后旧链接仍可访问，canonical 自动指向新前缀。
+# 前缀只允许 [a-zA-Z0-9_-]；后台会拦中文/保留字 slug，出链层另有兜底回退 type 前缀。
+# ============================================================
+# 旧页面兜底：s1/s2 的多级路径 URL 会被浏览器当作目录，
+# 旧版页面里相对引用的静态资源解析成 /post/usr/themes/.../style.css 而 404（整页掉样式）。
+# 新版页面已统一输出根绝对地址；此条只用于救浏览器缓存 / 收藏夹里的旧页面。
+rewrite ^/[^/]+/(usr/(?:themes|uploads|plugins)/.+)$ /$1 last;
+
+# ---- 非内容页：一律顶级 .html ----
+# 栏目首页缩写页（保留）：slug 与 type 前缀同名的栏目走这里，语义等同 /slug.html。
+rewrite ^/post\.html$           /index.php?do=site&type=article&$args  last;
+rewrite ^/soft\.html$           /index.php?do=site&type=software&$args last;
+rewrite ^/music\.html$          /index.php?do=site&type=song&$args     last;
+rewrite ^/image\.html$          /index.php?do=site&type=image&$args    last;
+rewrite ^/novel\.html$          /index.php?do=site&type=novel&$args    last;
+# slug 不安全 / 与 type 前缀错位时的栏目首页兜底（仍按 id 定位）
+rewrite ^/column-([0-9]+)\.html$   /index.php?do=site&id=$1&$args     last;
+rewrite ^/category-([0-9]+)\.html$ /index.php?do=category&id=$1&$args last;
+rewrite ^/tag-([0-9]+)\.html$      /index.php?do=tag&id=$1&$args      last;
+# 章节页三种形态（两种分隔都认，切换无需 reload）：
+#   s3  /novel-{作品id}-{第几章}.html
+#   s1  /novel/{作品id}-{第几章}.html
+#   s2  /novel/{发布日期8位}-{作品id}-{第几章}.html（日期取章节发布日期，与内容页一致）
+# 两段 / 三段数字，必须排在末尾通用「前缀-数字.html」/「前缀/数字.html」兜底之前，否则会被误判成内容页 id。
+rewrite ^/novel/([0-9]+)-([0-9]+)-([0-9]+)\.html$ /index.php?do=chapter&novel=$2&no=$3&$args last;
+rewrite ^/novel-([0-9]+)-([0-9]+)-([0-9]+)\.html$ /index.php?do=chapter&novel=$2&no=$3&$args last;
+rewrite ^/novel-([0-9]+)-([0-9]+)\.html$ /index.php?do=chapter&novel=$1&no=$2&$args last;
+rewrite ^/novel/([0-9]+)-([0-9]+)\.html$ /index.php?do=chapter&novel=$1&no=$2&$args last;
+# 旧章节链接（按章节全局 id）：只识别、不再生成
+rewrite ^/chapter-([0-9]+)\.html$  /index.php?do=chapter&id=$1&$args  last;
+rewrite ^/(about|links|archive|search|songs|sitemap)\.html$ /index.php?do=$1&$args last;
+# robots.txt 必须动态输出（Sitemap 指令要求绝对 URL），静态文件不能抢在前面命中
+rewrite ^/robots\.txt$ /index.php?do=robots&$args last;
+
+# ---- 内容页 s3：顶级 栏目-id（前缀为任意栏目 slug）----
+rewrite ^/([a-zA-Z0-9_-]+)-([0-9]+)\.html$ /index.php?do=content&id=$2&$args last;
+# ---- 内容页 s1 / s2：栏目目录 + 纯数字（前缀为任意栏目 slug）----
+rewrite ^/([a-zA-Z0-9_-]+)/([0-9]+)\.html$ /index.php?do=content&id=$2&$args last;
+
+# ---- 老链接兜底：只识别、不再生成；确认无外链后可删这 2 行 ----
+# 注意：nginx 配置里 {n} 量词的花括号会被词法解析当作配置块分隔符，
+# 导致 rewrite 指令报 "is not terminated by ';'"。故此处展开为 [0-9] 重复，不用 {n}。
+# 旧的「任意前缀-数字.html」已由上面 s3 通用规则覆盖，无需重复。
+rewrite ^/([0-9][0-9][0-9][0-9])-([0-9][0-9])-([0-9][0-9])-([0-9]+)\.html$ /index.php?do=content&id=$4&$args last;
+rewrite ^/([0-9]+)\.html$ /index.php?do=content&id=$1&$args last;
+
+# ---- 栏目首页通用形态：/{栏目slug}.html（用户可控地址）----
+# 出链层经 gblog_site_slug_is_url_safe() 校验后才生成此形态；纯数字已被校验层拦截，
+# 不会走到这里被上一行老链接规则抢走。未知 slug 由 site.php 返回 404 页（比裸 404 多了皮肤）。
+# 必须排在所有专用规则与老链接兜底之后。
+rewrite ^/([a-zA-Z0-9][a-zA-Z0-9_-]*)\.html$ /index.php?do=site&slug=$1&$args last;
+
+# Gblog 服务器层访问防护规则。
+#
+# ⚠ 重要：本文件必须被 vhost 在「server 级、任何 location 块之外」include，
+#    例如：server { include /path/to/nginx.htaccess; location / { ... } ... }
+#    不要把它放进 location / 内部——那样 deny 会变成嵌套 location，
+#    被服务器级的 location ~ \.php 优先级压过，对 .php 文件完全失效。
+#
+# 为什么用 ^~ 前缀而非 ~ 正则：
+#   本规则要覆盖「location ~ \.php」这种 FastCGI 处理器。正则 location 之间按出现顺序
+#   先匹配先生效，而嵌套正则又打不过外层正则。^~ 前缀 location 一旦最长匹配即锁定，
+#   直接跳过所有正则 location（含 \.php），从而确保以下路径绝不被当作 PHP 执行/访问。
+#
+# 为什么用 return 403 而非 deny all：
+#   部分整合环境（如 phpStudy）在 http 级预设了 error_page 403 /error/403.html，
+#   而该错误页可能不存在，会把 deny 的 403 又转成 404。return 403 是「正常响应」，
+#   不受 error_page 拦截，直接、干净地拒绝，语义也更明确。
+
+# 用户数据目录（含配置文件 config.php）：永不接受 HTTP 访问，整目录拒绝。
+# usr/data 属用户区，升级不覆盖；任意虚拟主机可装。Apache/IIS 由目录内 .htaccess/web.config 兜底。
+location ^~ /usr/data/ {
+    return 403 "Forbidden";
+}
+
+# 用户上传目录：任何 PHP 一律禁止执行/访问（防任意代码执行）。
+# 非 PHP 的静态资源（图片/音频）正常对外提供。
+location ^~ /usr/uploads/ {
+    location ~ \.php$ {
+        return 403 "Forbidden";
+    }
+}
+
+# 框架目录只允许 index.php 前置控制器经文件系统载入，直访一律拒绝。
+location ^~ /core/ {
+    return 403 "Forbidden";
+}
+location ^~ /app/ {
+    return 403 "Forbidden";
+}
+
+# 安装目录只含 SQL 表结构文件（安装器 install.php 在站点根），整目录拒绝防结构泄露。
+location ^~ /install/ {
+    return 403 "Forbidden";
+}
+
+# 备份目录（若被配置落在 Web 根内）：SQL 含口令哈希等敏感数据，整目录拒绝。
+location ^~ /gblog_backups/ {
+    return 403 "Forbidden";
+}
+
+# 主题目录：静态资源（CSS/JS/图片）正常提供，模板 PHP 零件直访一律拒绝（防路径回显/源码暴露）。
+# 嵌套正则写法与 /usr/uploads/ 相同，已实测 403 生效。
+location ^~ /usr/themes/ {
+    location ~ \.php$ {
+        return 403 "Forbidden";
+    }
+}
+
+# 根目录敏感单文件：安装锁与两份防护规则文件本身不可下载。
+location = /install.lock {
+    return 403 "Forbidden";
+}
+location = /.htaccess {
+    return 403 "Forbidden";
+}
+location = /nginx.htaccess {
+    return 403 "Forbidden";
+}

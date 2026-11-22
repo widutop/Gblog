@@ -1,0 +1,35 @@
+<?php
+// Gblog 主配置（自包含，位于 usr/data/ —— 仿 Z-Blog 把配置放进「用户数据区」）。
+//
+// 安全策略：本文件含数据库密码与站点密钥，程序经文件系统 include 加载，
+// 永不接受 HTTP 直接访问。各 web 服务器规则已 deny 对它的直访：
+//   - nginx 主机：根 nginx.htaccess 的 `location ^~ /usr/data/ { return 403 }`
+//   - Apache 主机：usr/data/.htaccess 的 `Require all denied`（安装器写入）
+//   - IIS 主机：usr/data/web.config 的 `deny users="*"`（安装器写入）
+// usr/data/ 属于用户区，升级不会被覆盖，且任意「仅授予根目录权限」的虚拟主机都能安装。
+//
+// 路径一律相对项目根（GBLOG_ROOT = dirname(__DIR__, 2)）计算，与配置文件自身位置解耦。
+// 注意：不要把它移到站点根之外——那样会要求写入上级目录，部分主机无法安装。
+
+define('GBLOG_ROOT', dirname(__DIR__, 2));
+
+define('DB_INSTALLED', true);
+define('DB_TYPE', 'mysql');
+define('DB_HOST', 'localhost');
+define('DB_NAME', '数据库名');
+define('DB_USER', '数据库用户名');
+define('DB_PASS', '在这里填数据库密码');
+define('DB_CHARSET', 'utf8mb4');
+define('GBLOG_SECRET', '安装时自动生成的64位随机串');
+define('SITE_NAME', 'Gblog');
+define('SITE_DESC', 'Gblog - 简洁优雅的个人博客');
+define('POSTS_PER_PAGE', 6);
+define('UPLOAD_DIR', GBLOG_ROOT . '/usr/uploads');
+define('UPLOAD_URL', '/usr/uploads');
+define('MAX_UPLOAD_SIZE', 20 * 1024 * 1024);
+define('ALLOWED_AUDIO_EXT', ['mp3','m4a','ogg','wav']);
+define('ALLOWED_IMAGE_EXT', ['jpg','jpeg','png','webp','gif']);
+define('THEMES_DIR', GBLOG_ROOT . '/usr/themes');
+define('ADMIN_SESSION_TTL', 7200);
+
+date_default_timezone_set('Asia/Shanghai');

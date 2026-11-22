@@ -1,0 +1,79 @@
+# Gblog Apache 伪静态 + 站点防护规则
+# 使用方法（二选一）：
+#   A. 站点根目录还没有 .htaccess —— 把本文件重命名为 .htaccess 放到站点根目录；
+#   B. 站点根目录已有 .htaccess（主机商指令或旧版 Gblog 规则）—— 把「GBLOG-REWRITE-BLOCK-START」
+#      到「GBLOG-REWRITE-BLOCK-END」之间的旧 Gblog 规则段整段替换为本文件的对应段落
+#      （保留该标记之外的原有内容，否则主机 PHP 处理器会失效）。
+# 前提：Apache 已开启 mod_rewrite，且虚拟主机允许 .htaccess（AllowOverride All）。
+# nginx 环境请忽略本文件，改用 nginx.htaccess 里的等价规则。
+# ---------------------------------------------------------------------------
+# GBLOG-REWRITE-BLOCK-START
+# GBLOG-RW-REV: 2
+# Apache 主机防护（nginx 主机由 nginx.htaccess 承担同等规则，本文件对 nginx 无效）。
+# ⚠ 此文件不能「禁执行全部 PHP」——那会让整站 403；上传目录防护在 usr/uploads/.htaccess。
+<FilesMatch "^(config\.php|install\.lock|nginx\.htaccess)$">
+    <IfModule mod_authz_core.c>
+        Require all denied
+    </IfModule>
+    <IfModule !mod_authz_core.c>
+        Order allow,deny
+        Deny from all
+    </IfModule>
+</FilesMatch>
+
+# ---------------------------------------------------------------------------
+# 伪静态（与 nginx.htaccess 等价）。后台「基础设置 → 启用伪静态 / 伪静态形态」：
+#   s1 /post/101.html  s2 /post/20261114101.html  s3 /post-101.html
+# 服务端同时接受三种形态 + 原始 ?do= 链接，切换设置无需改服务器配置。
+# 需要 mod_rewrite 且 AllowOverride 允许；nginx 环境请用 nginx.htaccess。
+# ---------------------------------------------------------------------------
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # robots.txt 始终由 PHP 输出绝对 Sitemap 地址，须排在「真实文件放行」之前
+    RewriteRule ^robots\.txt$ index.php?do=robots [QSA,L]
+
+    # 真实文件 / 目录（静态资源、index.php、admin/、usr/…）直接放行，不参与重写
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # 旧页面兜底：s1/s2 多级路径下相对静态资源会解析成 /post/usr/themes/... 而 404，
+    # 统一纠回站点根（新版页面已输出根绝对地址，此条只救缓存 / 收藏夹旧页）。
+    RewriteRule ^[^/]+/(usr/(?:themes|uploads|plugins)/.+)$ $1 [L]
+
+    # 非内容页：一律顶级 .html；缩写页栏目首页按 type 定位，通用 slug 形态见末尾
+    RewriteRule ^post\.html$                      index.php?do=site&type=article [QSA,L]
+    RewriteRule ^soft\.html$                      index.php?do=site&type=software [QSA,L]
+    RewriteRule ^music\.html$                     index.php?do=site&type=song [QSA,L]
+    RewriteRule ^image\.html$                     index.php?do=site&type=image [QSA,L]
+    RewriteRule ^novel\.html$                     index.php?do=site&type=novel [QSA,L]
+    RewriteRule ^column-([0-9]+)\.html$           index.php?do=site&id=$1 [QSA,L]
+    RewriteRule ^category-([0-9]+)\.html$         index.php?do=category&id=$1 [QSA,L]
+    RewriteRule ^tag-([0-9]+)\.html$              index.php?do=tag&id=$1 [QSA,L]
+    # 章节页三种形态（两种分隔都认）：s3 /novel-{id}-{no}.html、s1 /novel/{id}-{no}.html、
+    # s2 /novel/{Ymd}-{id}-{no}.html（Ymd 取章节发布日期，与内容页一致）。两段/三段数字须排在末尾兜底之前
+    RewriteRule ^novel/([0-9]+)-([0-9]+)-([0-9]+)\.html$ index.php?do=chapter&novel=$2&no=$3 [QSA,L]
+    RewriteRule ^novel-([0-9]+)-([0-9]+)-([0-9]+)\.html$ index.php?do=chapter&novel=$2&no=$3 [QSA,L]
+    RewriteRule ^novel-([0-9]+)-([0-9]+)\.html$    index.php?do=chapter&novel=$1&no=$2 [QSA,L]
+    RewriteRule ^novel/([0-9]+)-([0-9]+)\.html$    index.php?do=chapter&novel=$1&no=$2 [QSA,L]
+    # 旧章节链接（按章节全局 id）：只识别、不再生成
+    RewriteRule ^chapter-([0-9]+)\.html$          index.php?do=chapter&id=$1 [QSA,L]
+    RewriteRule ^(about|links|archive|search|songs|sitemap)\.html$ index.php?do=$1 [QSA,L]
+
+    # 内容页 s3 顶级 栏目-id；s1/s2 栏目目录 + 纯数字（s2 日期由 content.php 剥离）
+    RewriteRule ^(post|soft|music|image|novel)-([0-9]+)\.html$ index.php?do=content&id=$2 [QSA,L]
+    RewriteRule ^(post|soft|music|image|novel)/([0-9]+)\.html$ index.php?do=content&id=$2 [QSA,L]
+    # 自建栏目 slug 目录形态：/{slug}/{纯id或日期+id}.html（s1/s2，前缀仅可读性、不参与归属校验）
+    RewriteRule ^([a-zA-Z0-9_-]+)/([0-9]+)\.html$ index.php?do=content&id=$2 [QSA,L]
+
+    # 老链接兜底：只识别、不再生成；确认无外链后可删这 3 行
+    RewriteRule ^([0-9]{4})-([0-9]{2})-([0-9]{2})-([0-9]+)\.html$ index.php?do=content&id=$4 [QSA,L]
+    RewriteRule ^([0-9]+)\.html$                  index.php?do=content&id=$1 [QSA,L]
+    RewriteRule ^([a-zA-Z0-9_-]+)-([0-9]+)\.html$ index.php?do=content&id=$2 [QSA,L]
+
+    # 栏目首页通用形态：/{栏目slug}.html（用户可控地址）。出链层校验通过才生成；
+    # 纯数字已被校验层拦截，未知 slug 由 PHP 返回 404 页。必须排在上面所有规则之后。
+    RewriteRule ^([a-zA-Z0-9][a-zA-Z0-9_-]*)\.html$ index.php?do=site&slug=$1 [QSA,L]
+</IfModule>
+# GBLOG-REWRITE-BLOCK-END

@@ -1,0 +1,174 @@
+.uc { display: flex; flex-direction: column; gap: 10px; }
+.uc *, .uc *::before, .uc *::after { box-sizing: border-box; }
+.uc a { color: var(--primary); text-decoration: none; }
+.uc a:hover { text-decoration: underline; }
+
+/* 用户资料与导航共用左侧同一张白卡（.uc-nav），中间只留 1px 分区线；
+   不再单独做顶部横条，也不拆成两张卡（两块之间会露出页面灰底）。 */
+/* 用户中心所有内容左右离边框 20px、上下沿用原紧凑值；hero 负 margin 必须同步抵消 nav 左右 padding，
+   否则用户资料块会缩进、1px 分区线撑不满整张白卡。 */
+.uc-hero { display: flex; flex-direction: column; align-items: center; text-align: center;
+  margin: 0 -20px 10px; padding: 16px 20px 14px; border-bottom: 1px solid var(--border); }
+.uc-avatar { width: 48px; height: 48px; flex: none; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 700; color: #fff; background: var(--primary); margin-bottom: 10px; }
+.uc-hero-id { flex: none; width: 100%; min-width: 0; }
+.uc-name { font-size: 16px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 6px; }
+.uc-role { font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 20px; background: var(--bg-elev); color: var(--text-muted); }
+.uc-sub { font-size: 13px; color: var(--text-muted); margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 4px; }
+.uc-hero-act { display: flex; flex-direction: column; gap: 6px; width: 100%; margin-top: 12px; }
+.uc-hero-act form { margin: 0; width: 100%; } /* 签到按钮改为 POST 表单（CSRF），表单盒不得撑破布局 */
+.uc-hero-act .uc-btn { width: 100%; padding: 7px 10px; font-size: 13px; }
+
+.uc-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); color: var(--text); font-size: 14px; line-height: 1.4; cursor: pointer; text-decoration: none; white-space: nowrap; font-family: inherit; }
+.uc-btn:hover { border-color: var(--primary); color: var(--primary); text-decoration: none; }
+.uc-btn-primary { background: var(--primary); border-color: var(--primary); color: #fff; }
+.uc-btn-primary:hover { background: var(--primary-dark); border-color: var(--primary-dark); color: #fff; }
+.uc-btn-done { opacity: .65; cursor: default; }
+.uc-btn-done:hover { border-color: var(--border); color: var(--text); }
+/* .uc a 优先级高于 .uc-btn-primary，主按钮必须带类名限定才能保持白字 */
+.uc a.uc-btn-primary, .uc button.uc-btn-primary,
+.uc a.uc-btn-primary:hover, .uc button.uc-btn-primary:hover { color: #fff; }
+
+/* 左栏宽度对齐首页右侧栏（layout.css: 330px / ≤1024px 260px / ≤768px 100%）。 */
+.uc-body { display: grid; grid-template-columns: 330px minmax(0, 1fr); gap: 10px; align-items: start; }
+@media (max-width: 1024px) { .uc-body { grid-template-columns: 260px minmax(0, 1fr); } }
+/* 个人中心导航同样使用前台统一分段 tab 外观（layout.css），此处只保留纵向布局与 sticky。 */
+.uc-nav { display: flex; flex-direction: column; gap: 4px; position: sticky; top: 80px;
+  padding-left: 20px; padding-right: 20px; }
+.uc-nav-item { justify-content: flex-start; }
+/* .uc a 会把所有链接染成主色，导航项必须按统一 tab 口径还原：未选中深灰、选中/hover 主色 */
+.uc a.uc-nav-item { color: #555; }
+.uc a.uc-nav-item:hover, .uc a.uc-nav-item.active { color: var(--primary); text-decoration: none; }
+body[data-mode="dark"] .uc a.uc-nav-item { color: var(--text-muted); }
+.uc-nav-exit { margin-top: 6px; padding-top: 12px; border-top: 1px solid var(--border); border-radius: 0 0 8px 8px; color: var(--text-muted); }
+.uc-panel { display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+/* 「我的内容」：tab 头与内容面板必须包在同一个 flex 子项里，否则 .uc-panel 的 10px gap 会在两块之间露出灰底。 */
+.uc-content-card { display: flex; flex-direction: column; min-width: 0; }
+.uc-tab-panel > .uc-block { background: transparent; border: 0; border-radius: 0; box-shadow: none; padding: 0; }
+/* .uc a 优先级高于 .gb-list-tab，子 tab 必须按统一 tab 口径还原未选中灰字、选中主色，并去掉 hover 下划线 */
+.uc a.gb-list-tab { color: #555; }
+.uc a.gb-list-tab:hover, .uc a.gb-list-tab.is-active { color: var(--primary); text-decoration: none; }
+body[data-mode="dark"] .uc a.gb-list-tab { color: var(--text-muted); }
+
+.uc-alert { padding: 10px 20px; border-radius: 8px; font-size: 14px; background: rgba(46,158,99,.12); color: #2e9e63; border: 1px solid rgba(46,158,99,.3); }
+.uc-alert-err { background: rgba(220,70,70,.12); color: #d64545; border-color: rgba(220,70,70,.3); }
+.uc-alert-warn { background: rgba(230,160,40,.14); color: #b8790d; border-color: rgba(230,160,40,.32); }
+.uc-alert a { color: inherit; font-weight: 600; text-decoration: underline; }
+
+.uc-stats { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+.uc-stat { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 20px; box-shadow: var(--shadow); }
+.uc-stat > span { display: block; font-size: 14px; color: var(--text-muted); }
+.uc-stat b { display: block; font-size: 26px; line-height: 1.3; margin: 4px 0 2px; }
+.uc-stat small { font-size: 13px; color: var(--text-muted); }
+.uc-stat small a { color: var(--primary); }
+.uc-stat-gold b { color: var(--primary); }
+
+.uc-cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.uc-cols-wide-first { grid-template-columns: 1.35fr 1fr; }
+.uc-cols > .uc-block:only-child { grid-column: 1 / -1; }
+.uc-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.uc-cols-3 .uc-form-grid { grid-template-columns: 1fr; gap: 8px; }
+.uc-cols-3 .uc-form-foot { flex-wrap: wrap; gap: 6px 10px; }
+.uc-block { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 20px; box-shadow: var(--shadow); min-width: 0; }
+.uc-block h3 { margin: 0 0 8px; font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.uc-block h3 .gb-icon { color: var(--text-muted); }
+.uc-more { margin-left: auto; font-size: 13px; font-weight: 400; }
+.uc-count { font-size: 13px; font-weight: 400; color: var(--text-muted); }
+
+.uc-list { list-style: none; margin: 0; padding: 0; }
+.uc-list > li { display: flex; align-items: center; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 14px; line-height: 1.45; }
+.uc-list > li:last-child { border-bottom: 0; }
+.uc-list > li > a { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
+.uc-list > li > a:hover { color: var(--primary); }
+.uc-list time { font-size: 12px; color: var(--text-muted); white-space: nowrap; }
+.uc-list .uc-reason { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.uc-list .gb-icon { color: var(--text-muted); }
+.uc-list-comment > li { flex-wrap: wrap; }
+.uc-list-comment > li > a { flex: 0 1 auto; }
+.uc-list-comment > li > p { flex: 0 0 100%; margin: 1px 0 0; font-size: 13px; line-height: 1.45; color: var(--text-muted); }
+
+.uc-table { width: 100%; border-collapse: collapse; font-size: 14px; line-height: 1.45; }
+/* 表格首列不再叠加 10px 左内边距：否则「我的文章」文字离白卡 30px、其余 tab 是 20px。
+   列间距留在右侧且上下不变；末列贴内容区右边界，四边仍由面板的 20px 决定。 */
+.uc-table th { text-align: left; font-size: 13px; font-weight: 500; line-height: 1.4; color: var(--text-muted); padding: 5px 10px 5px 0; border-bottom: 1px solid var(--border); }
+.uc-table td { padding: 6px 10px 6px 0; border-bottom: 1px solid var(--border); }
+.uc-table th:last-child, .uc-table td:last-child { padding-right: 0; }
+.uc-table tr:last-child td { border-bottom: 0; }
+.uc-table a { color: var(--text); }
+.uc-table a:hover { color: var(--primary); }
+.uc-dim { font-size: 13px; color: var(--text-muted); white-space: nowrap; }
+/* 「我的文章」分页条：仅多页时渲染，自带样式不依赖后台 .btn；.uc a 的主色需按按钮口径覆盖。 */
+.uc-pager { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px; margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border); }
+.uc-pager-info { font-size: 13px; color: var(--text-muted); }
+.uc-pager-nav { display: flex; align-items: center; gap: 6px; }
+.uc-pager-btn { display: inline-flex; align-items: center; padding: 5px 12px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-card); color: var(--text); font-size: 13px; text-decoration: none; white-space: nowrap; }
+.uc-pager-btn:hover { border-color: var(--primary); color: var(--primary); text-decoration: none; }
+.uc a.uc-pager-btn { color: var(--text); }
+.uc a.uc-pager-btn:hover { color: var(--primary); text-decoration: none; }
+.uc-pager-btn.is-disabled { opacity: .45; cursor: default; }
+.uc-pager-btn.is-disabled:hover, .uc a.uc-pager-btn.is-disabled:hover { border-color: var(--border); color: var(--text); }
+.uc-plus { color: #2e9e63; }
+.uc-minus { color: #e74c3c; }
+
+.uc-badge { display: inline-block; padding: 1px 8px; border-radius: 20px; font-size: 12px; line-height: 1.5; background: var(--bg-elev); color: var(--text-muted); white-space: nowrap; }
+.uc-badge-published, .uc-badge-approved { background: rgba(46,158,99,.14); color: #2e9e63; }
+.uc-badge-draft, .uc-badge-pending { background: rgba(230,160,40,.16); color: #b8790d; }
+.uc-badge-hidden, .uc-badge-spam { background: rgba(220,70,70,.14); color: #d64545; }
+
+.uc-empty { text-align: center; padding: 22px 10px; color: var(--text-muted); }
+.uc-empty-icon { display: inline-flex; opacity: .6; }
+.uc-empty p { margin: 6px 0 8px; font-size: 14px; }
+.uc-link { font-size: 14px; }
+
+/* 钱包余额不再单独占一张卡，放进 tab 头右侧留白；签到入口始终在左侧 hero。 */
+.uc-tab-aside { flex: none; margin-left: auto; padding-left: 14px; display: flex; flex-direction: column; align-items: flex-end; gap: 2px; line-height: 1.3; white-space: nowrap; }
+.uc-tab-aside-gold { font-size: 13px; color: var(--text-muted); }
+.uc-tab-aside-gold b { font-size: 18px; font-weight: 700; color: var(--primary); margin-left: 4px; }
+.uc-tab-aside small { font-size: 12px; color: var(--text-muted); }
+
+.uc-kv { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 15px; }
+.uc-kv:last-child { border-bottom: 0; }
+.uc-kv > span { width: 90px; flex: none; font-size: 14px; color: var(--text-muted); }
+.uc-kv-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-flow: column; grid-template-rows: repeat(2, auto); column-gap: 28px; }
+.uc-kv-grid .uc-kv:nth-child(odd) { border-bottom: 1px solid var(--border); }
+.uc-kv-grid .uc-kv:nth-child(even) { border-bottom: 0; }
+.uc-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.uc-field { display: block; min-width: 0; margin-bottom: 12px; }
+.uc-form-grid .uc-field { margin-bottom: 0; }
+.uc-field > span { display: block; font-size: 14px; color: var(--text-muted); margin-bottom: 5px; }
+.uc-field input { width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--text); font-size: 15px; font-family: inherit; }
+.uc-field input:focus { outline: none; border-color: var(--primary); }
+.uc-form-foot { display: flex; align-items: center; gap: 10px; margin-top: 14px; }
+.uc-form-foot > span { font-size: 13px; color: var(--text-muted); }
+.uc-tip { margin: 4px 0 0; font-size: 13px; line-height: 1.7; color: var(--text-muted); }
+@media (max-width: 1000px) {
+    .uc-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 768px) {
+    .uc-body { grid-template-columns: minmax(0, 1fr); }
+    /* hero 已并入 uc-nav，nav 不能再整体横排；只让里面的菜单灰条横向可滚。
+       横向灰条必须 min-width:0，否则其 nowrap 菜单会把整张左卡撑到视口之外。 */
+    .uc-nav { position: static; flex-direction: column; min-width: 0; }
+    .uc-nav .gb-tab-group { flex-direction: row; align-items: center; overflow-x: auto; min-width: 0; max-width: 100%; }
+    .uc-nav-item { flex: none; white-space: nowrap; padding: 8px 12px; }
+    .uc-nav-exit { margin-top: 0; padding-top: 8px; border-top: 0; border-left: 1px solid var(--border); border-radius: 0; }
+    .uc-cols, .uc-cols-3, .uc-cols-wide-first, .uc-form-grid { grid-template-columns: 1fr; }
+    .uc-kv-grid { display: block; }
+    .uc-kv-grid .uc-kv:nth-child(n) { border-bottom: 1px solid var(--border); }
+    .uc-kv-grid .uc-kv:last-child { border-bottom: 0; }
+    .uc-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .uc-hero { flex-direction: row; flex-wrap: wrap; align-items: center; text-align: left; gap: 10px 12px; }
+    .uc-avatar { margin-bottom: 0; }
+    .uc-hero-id { flex: 1; width: auto; }
+    .uc-name, .uc-sub { justify-content: flex-start; }
+    .uc-hero-act { flex-direction: row; width: 100%; margin-top: 0; }
+    .uc-hero-act form { width: auto; flex: 1; }
+    .uc-hero-act .uc-btn { flex: 1; width: auto; min-width: 0; }
+    .uc-tab-aside small { display: none; }
+    .uc-tab-aside-gold b { font-size: 16px; }
+    /* 桌面所有内容左右 20px；窄屏一律回到 10px：否则表格标题列被挤成多行、统计卡与 hero 过窄。
+       hero 负 margin 必须跟着 nav 左右 padding 一起回退，否则会溢出白卡造成横向滚动。 */
+    .uc-content-tabs { padding-left: 10px; padding-right: 10px; }
+    .uc-content-tabs + .uc-tab-panel { padding: 10px; }
+    .uc-nav, .uc-stat, .uc-block, .uc-alert { padding-left: 10px; padding-right: 10px; }
+    .uc-hero { margin-left: -10px; margin-right: -10px; padding-left: 10px; padding-right: 10px; }
+}

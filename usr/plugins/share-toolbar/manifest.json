@@ -1,0 +1,17 @@
+{
+  "id": "share-toolbar",
+  "type": "plugin",
+  "name": "分享工具条",
+  "version": "1.1.0",
+  "author": "Gblog",
+  "desc": "固定贴网页右边缘的竖排工具条：分享按钮（悬浮即展开平台面板）、当前页二维码图标、收藏本页、返回顶部箭头（滚动后出现在列末位）。分享面板含微博、QQ空间、QQ好友、微信、豆瓣、Facebook、Twitter、Linkedin，支持一键复制链接。各平台可在后台独立开关——国内站可关掉访问不畅的海外平台，海外站可全部开启。",
+  "requires_core": "1.4.0",
+  "builtin": false,
+  "entry": "plugin.php",
+  "settings": "settings.php",
+  "assets": {
+    "css": ["assets/share.css"],
+    "js": ["assets/qrcode.min.js", "assets/share.js"]
+  },
+  "hooks": ["footer"]
+}

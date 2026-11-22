@@ -1,0 +1,35 @@
+/* 封面图填充零件 —— 全站「图片铺满容器」的唯一归口。
+   统一用 :where()（特异性 0），皮肤自带规则（含响应式）始终优先。
+   新增封面样式时：在此处加一条 :where(...) 规则，不要在各 view 目录重复写
+   width/height/object-fit 三件套。
+   改后必须递增 core/theme.php 的 $ver（CSS 缓存戳）。 */
+
+/* 通用：图片铺满父容器 */
+:where(.agg-recent-thumb) img,
+:where(.agg-player-cover) img,
+:where(.agg-slide-cover) img,
+:where(.agg-col-card-cover) img,
+:where(.gb-music-reel-cover) img,
+:where(.gb-music-chart-cover) img,
+:where(.gb-music-grid-cover) img,
+:where(.post-nav-media) img,
+:where(.song-rel-cover) img,
+:where(.post-card-cover-link) img,
+:where(.stc-logo) img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* 容器本身需要裁切时一并处理 */
+:where(.agg-recent-thumb),
+:where(.agg-player-cover),
+:where(.agg-slide-cover),
+:where(.agg-col-card-cover),
+:where(.gb-music-reel-cover),
+:where(.gb-music-chart-cover),
+:where(.gb-music-grid-cover),
+:where(.song-rel-cover) {
+    overflow: hidden;
+}

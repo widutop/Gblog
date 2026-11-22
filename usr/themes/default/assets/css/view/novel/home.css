@@ -1,0 +1,40 @@
+/* 小说栏目视图组件（结构层，与皮肤配色无关）
+ * 从原 novel 皮肤 style.css 抽出——全局主题化后类型结构样式统一随主题包分发，
+ * 主题链解析：usr/themes/{激活主题}/style/view/novel/home.css → 父主题兜底 */
+.novel-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 10px;
+}
+.novel-card {
+    display: flex;
+    gap: 14px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    transition: box-shadow .15s, border-color .15s;
+}
+.novel-card:hover { border-color: var(--primary); box-shadow: 0 2px 10px rgba(0,0,0,.06); }
+.novel-cover {
+    width: 108px; height: 148px; object-fit: cover;
+    border-radius: 6px; flex-shrink: 0; background: var(--bg-alt);
+}
+.novel-cover.placeholder { display:flex; align-items:center; justify-content:center; font-size:28px; color:var(--text-muted); }
+.novel-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+.novel-title { font-size: 16px; font-weight: 700; color: var(--text); line-height: 1.4; }
+.novel-title a { color: inherit; text-decoration: none; }
+.novel-title a:hover { color: var(--primary); }
+.novel-meta { font-size: 13.5px; color: var(--text-muted); }
+.novel-status { display:inline-block; font-size: 12px; color: #fff; background: var(--primary); border-radius: 3px; padding: 1px 7px; margin-left: 6px; vertical-align: middle; }
+.novel-desc {
+    font-size: 14px; color: var(--text-muted); line-height: 1.6;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+}
+.novel-latest { font-size: 13px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.novel-latest a { color: var(--primary); text-decoration: none; }
+.novel-cat { font-size: 12px; color: var(--primary); border: 1px solid var(--primary); border-radius: 3px; padding: 0 6px; align-self: flex-start; }
+
+@media (max-width: 768px) {
+    .novel-grid { grid-template-columns: 1fr; }
+}

@@ -1,0 +1,69 @@
+:root {
+    --primary: #1d6fe0;
+    --primary-dark: #1655ad;
+    --primary-light: #eaf1fc;
+    --bg: #f0f2f5;    /* 与后台一致 */
+    --bg-card: #ffffff;
+    --border: #e5e9f0;
+    --text: #24303f;
+    --text-muted: #7a8798;
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(20, 35, 60, .08);
+}
+
+
+html { -webkit-text-size-adjust: 100%; }
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+*, *::before, *::after { box-sizing: border-box; }
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+                 "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    font-size: 16px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+a { color: var(--primary); text-decoration: none; }
+a:hover { color: var(--primary-dark); }
+
+.hot-comments a { color: var(--text-muted); }
+.hot-comments a:hover { color: var(--primary); }
+
+.footer-inner {
+    display: flex; flex-direction: column; align-items: center;
+    padding-top: 18px; padding-bottom: 18px; font-size: 14px; color: var(--text-muted);
+    text-align: center;
+}
+.footer-inner a { color: var(--text-muted); }
+.footer-inner a:hover { color: var(--primary); }
+
+/* 新增使用 post_card_list 的皮肤必须自带 .post-card 基础样式，否则卡片裸奔 */
+.post-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    overflow: hidden;
+    transition: box-shadow .15s ease, transform .15s ease;
+    display: flex;
+    height: 164px;
+    padding: 0 12px;
+}
+.post-card:hover { box-shadow: var(--shadow); transform: translateY(-1px); }
+.post-card-cover-link { align-self: center; width: 180px; min-width: 180px; height: 123px; display: block; border-radius: 6px; overflow: hidden; background: var(--primary-light); }
+.post-card-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 30px; color: var(--primary); }
+.post-card-body { padding: 20.5px 14px; flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.post-title { font-size: 16px; line-height: 1.4; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.post-title a { color: var(--text); }
+.post-title a:hover { color: var(--primary); }
+.post-meta { margin-top: auto; font-size: 15px; color: var(--text-muted); margin-bottom: 0; display: flex; justify-content: space-between; align-items: center; }
+.post-meta-left, .post-meta-right { display: flex; align-items: center; gap: 12px; }
+.post-meta span { display: flex; align-items: center; gap: 3px; }
+.post-meta .cat { color: var(--primary); }
+.post-excerpt { flex: 1; color: var(--text-muted); font-size: 14px; line-height: 1.5; margin: 8px 0 0; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }

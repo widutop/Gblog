@@ -1,0 +1,214 @@
+/* 分享工具条插件样式 —— 复用主题变量，自动适配皮肤与暗色
+   位置：悬浮在右侧栏的右侧 5px（--gb-share-right 由 JS 按实际栏缘计算；
+        无侧栏时用内容区右缘，位置与有侧栏时一致）。
+        纵向靠下：贴视口底部上方 --gb-share-bottom（默认 96px）。
+   零件间距统一用主题的 --gb-part-gap（当前 5px）。 */
+.gb-share {
+  position: fixed;
+  right: var(--gb-share-right, 12px);
+  bottom: var(--gb-share-bottom, 96px);
+  top: auto;
+  transform: none;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--gb-part-gap, 5px);
+  font-family: var(--font-ui, -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif);
+}
+
+/* 视口不够宽时，JS 会算出需要预留的宽度并给 <html> 加 .gb-share-reserve，
+   这里给内容区右侧留出这条空间，工具条就永远落在侧栏外侧，不会压住任何文字。
+   预留量随视口变化，容器本身仍居中，正文不会被挤歪。 */
+html.gb-share-reserve .site-main,
+html.gb-share-reserve .container {
+  padding-right: calc(var(--gb-share-reserve, 0px) + 10px);
+}
+
+/* 按钮 */
+.gb-share-slot { position: relative; display: flex; }
+/* 面板在按钮右侧展开，5px 缝隙用透明桥接补住，鼠标划过不误关 */
+.gb-share-slot::after {
+  content: "";
+  position: absolute;
+  left: 100%;
+  top: 0;
+  width: var(--gb-part-gap, 5px);
+  height: 100%;
+}
+/* 面板翻到左侧时，桥接缝隙同步换到左边 */
+.gb-share-slot.gb-share-flip-slot::after {
+  left: auto;
+  right: 100%;
+}
+.gb-share-btn {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  border: 1px solid var(--border, #e3e8ef);
+  background: var(--bg-card, #fff);
+  color: var(--text, #222);
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(20, 30, 50, .14);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform .15s ease, background .15s ease, color .15s ease, border-color .15s ease,
+              opacity .2s ease, visibility .2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.gb-share-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary, #1d6fe0);
+  color: var(--primary, #1d6fe0);
+}
+.gb-share-btn svg { width: 20px; height: 20px; display: block; }
+.gb-share-toggle { background: var(--primary, #1d6fe0); color: #fff; border-color: transparent; }
+.gb-share-toggle:hover { background: var(--primary-dark, #1655ad); color: #fff; }
+.gb-share.gb-share-open .gb-share-toggle { background: var(--primary-dark, #1655ad); }
+
+/* 返回顶部箭头：常驻列末位（最下方），滚动后显形 */
+.gb-share-top { opacity: 0; visibility: hidden; }
+.gb-share.gb-share-show .gb-share-top { opacity: 1; visibility: visible; }
+
+/* 面板（分享平台 / 二维码）：默认向右展开，不遮挡左侧内容；
+   右侧空间不足时翻到左侧（左侧是侧栏区，不会压到正文）。 */
+.gb-share-panel,
+.gb-share-qrpop {
+  position: absolute;
+  left: calc(100% + var(--gb-part-gap, 5px));
+  right: auto;
+  top: 0;
+  width: 252px;
+  max-width: calc(100vw - 40px);
+  background: var(--bg-card, #fff);
+  border: 1px solid var(--border, #e3e8ef);
+  border-radius: 14px;
+  box-shadow: 0 10px 34px rgba(20, 30, 50, .18);
+  padding: 14px;
+  box-sizing: border-box;
+  color: var(--text, #222);
+}
+.gb-share-panel.gb-share-flip,
+.gb-share-qrpop.gb-share-flip {
+  left: auto;
+  right: calc(100% + var(--gb-part-gap, 5px));
+}
+.gb-share-panel[hidden],
+.gb-share-qrpop[hidden] { display: none; }
+
+/* 平台网格 */
+.gb-share-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+.gb-share-item {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 0;
+  border-radius: 8px;
+  transition: background .15s ease;
+}
+.gb-share-item:hover { background: var(--bg-alt, #f4f6fa); }
+.gb-share-ico {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  background: var(--c, #1d6fe0);
+  color: var(--fg, #fff);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+}
+.gb-share-name {
+  font-size: 12px;
+  color: var(--text-muted, #6b7686);
+  line-height: 1.1;
+  text-align: center;
+}
+
+/* 二维码 */
+.gb-share-qr-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.gb-share-qr {
+  width: 140px;
+  height: 140px;
+  background: #fff;
+  border-radius: 8px;
+  padding: 6px;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.gb-share-qr img, .gb-share-qr canvas { display: block; width: 128px !important; height: 128px !important; }
+.gb-share-qr-tip {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-muted, #6b7686);
+  text-align: center;
+}
+.gb-share-qr-flash { animation: gb-share-flash .5s ease 2; border-radius: 8px; }
+@keyframes gb-share-flash {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(7, 193, 96, 0); }
+  50% { box-shadow: 0 0 0 4px rgba(7, 193, 96, .55); }
+}
+
+/* 复制链接 */
+.gb-share-copy {
+  margin-top: 12px;
+  width: 100%;
+  border: 1px solid var(--border, #e3e8ef);
+  background: var(--bg-alt, #f4f6fa);
+  color: var(--text, #222);
+  border-radius: 9px;
+  padding: 9px 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease, color .15s ease, border-color .15s ease;
+}
+.gb-share-copy:hover { border-color: var(--primary, #1d6fe0); color: var(--primary, #1d6fe0); }
+
+/* 轻提示：默认在工具条右侧；面板翻左时同步换到左侧，避免溢出视口 */
+.gb-share-toast {
+  position: absolute;
+  left: calc(100% + var(--gb-part-gap, 5px));
+  right: auto;
+  bottom: 0;
+  background: rgba(20, 28, 44, .92);
+  color: #fff;
+  font-size: 13px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  white-space: nowrap;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
+  z-index: 2;
+}
+.gb-share.gb-share-flip-panel .gb-share-toast {
+  left: auto;
+  right: calc(100% + var(--gb-part-gap, 5px));
+}
+.gb-share-toast[hidden] { display: none; }
+@media (max-width: 768px) {
+  .gb-share-btn { width: 42px; height: 42px; }
+  .gb-share-btn svg { width: 18px; height: 18px; }
+  .gb-share-panel,
+  .gb-share-qrpop { width: 220px; }
+  .gb-share-grid { gap: 8px; }
+  .gb-share-ico { width: 34px; height: 34px; font-size: 13px; }
+}

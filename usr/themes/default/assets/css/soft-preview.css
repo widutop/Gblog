@@ -1,0 +1,52 @@
+body:not([data-mode="dark"]) {
+    --soft-fill: #eef1f5;
+    --shadow: 0 1px 3px rgba(0, 20, 60, .06), 0 1px 2px rgba(0, 20, 60, .04);
+    --primary-light: rgba(127, 127, 127, .10);
+    --bg-alt: #eef1f5;
+}
+body:not([data-mode="dark"]) :is(.post-card, .widget, .gb-music-chart, .gb-music-grid-card, .post-full, .comments) {
+    background: var(--bg-card);
+    border-color: var(--border);
+    box-shadow: var(--shadow);
+}
+body:not([data-mode="dark"]) :is(.post-full, .comments) { margin: 0 0 10px; padding: 26px 30px; border-radius: var(--radius); }
+body:not([data-mode="dark"]) :is(.site-header, .site-footer) { border-top: 0; border-bottom: 0; }
+body:not([data-mode="dark"]) .site-header { box-shadow: 0 2px 12px rgba(46, 59, 56, .05); }
+/* tab 外观统一在 layout.css 的「前台统一分段 tab」段落，此处不再按皮肤重复覆盖。 */
+body:not([data-mode="dark"]) .gb-generic-list .post-card { border-color: transparent; }
+body:not([data-mode="dark"]) .gb-generic-list .post-card-body { padding: 5px; }
+body:not([data-mode="dark"]) .post-meta { background: var(--soft-fill); border-radius: 8px; padding: 4px 9px; }
+body:not([data-mode="dark"]) :is(.tag-cloud a, .post-meta .cat) { background: var(--primary-light); border-color: transparent; color: var(--primary-dark); border-radius: 6px; padding: 2px 8px; }
+body:not([data-mode="dark"]) .react-btn { background: var(--bg-alt); border-radius: 6px; }
+body:not([data-mode="dark"]) .react-btn.active { background: var(--primary-light); }
+body:not([data-mode="dark"]) :is(.widget h3, .agg-rank-head, .comments-title) { border-bottom: 0; background: var(--primary-light); color: var(--primary-dark); border-radius: 8px; padding: 6px 10px; }
+body:not([data-mode="dark"]) :is(.player-list li, .recent-songs li, .link-item, .archive-item, .hot-comments li) {
+    border-bottom: 0;
+    background: var(--soft-fill);
+    border-radius: 8px;
+    padding: 6px 9px;
+    margin-bottom: 5px;
+}
+body:not([data-mode="dark"]) :is(.post-content h2, .post-content blockquote) {
+    border-top: 0;
+    border-bottom: 0;
+    border-left: 0;
+    background: var(--soft-fill);
+    box-shadow: inset 3px 0 0 var(--primary);
+    border-radius: 0 8px 8px 0;
+    padding: 6px 12px;
+    color: var(--text);
+}
+body:not([data-mode="dark"]) .post-content th { background: var(--bg-alt); }
+body:not([data-mode="dark"]) .post-content { line-height: 1.85; }
+body:not([data-mode="dark"]) .post-content img { box-shadow: var(--shadow); }
+body:not([data-mode="dark"]) .post-content pre { background: #2b3a37; color: #e8efec; }
+body:not([data-mode="dark"]) :is(.post-foot) { border-top: 0; border-bottom: 0; background: var(--soft-fill); border-radius: 10px; padding: 14px; }
+body:not([data-mode="dark"]) :is(.comments, .comment-item) { border-top: 0; border-bottom: 0; border-left: 0; }
+body:not([data-mode="dark"]) .comment-item { background: var(--soft-fill); border-radius: 10px; padding: 14px; margin-bottom: 10px; }
+body:not([data-mode="dark"]) .agg-rank-head { margin-bottom: 5px; cursor: pointer; }
+body:not([data-mode="dark"]) :is(.download-box, .ad-widget) { border: 0; background: var(--bg-alt); }
+body:not([data-mode="dark"]) :is(.btn:not(.btn-primary), .pagination a:not(.btn-primary), .mode-btn, .icon-btn, .login-link) { border-color: transparent; background: var(--bg-alt); }
+body:not([data-mode="dark"]) :is(.btn:not(.btn-primary):hover, .pagination a:not(.btn-primary):hover) { background: var(--primary-light); color: var(--primary-dark); }
+body:not([data-mode="dark"]) :is(.gb-search-form input[type="text"], .search-form input[type="text"], .gb-search-pop input[type="text"], .comment-form input, .comment-form textarea) { background: var(--bg-card); }
+body:not([data-mode="dark"]) :is(.gb-list-empty, .gb-search-empty) { background: var(--bg-card); border-radius: var(--radius); box-shadow: var(--shadow); }

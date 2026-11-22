@@ -1,0 +1,96 @@
+/* ==========================================================================
+   Gblog 全站「零件间距」统一：5px
+   --------------------------------------------------------------------------
+   - 由 core/theme.php::theme_stylesheets() 排在 soft-preview.css 之后最后加载，
+     统一覆盖 style / layout / aggregate / soft-preview / user / view 里各自为政的
+     10 / 12 / 14 / 16 / 18 / 20 / 22 / 26px 历史间距。
+   - 「零件」= 页面上带卡片外观或独立功能的块：软件信息卡、正文卡、上下篇、
+     相关推荐、评论、侧栏 widget、列表卡、分页、聚合区块、音乐网格、榜单等。
+   - 只统一「零件与零件之间」；零件内部的行距、图标间距、左右内边距不动。
+     详情主卡上下 26px 内边距属于例外（§4）：它会冒充零件间隔，必须一起收掉。
+   - 以后要整体换间距，只改 --gb-part-gap 一个值即可。
+   ========================================================================== */
+:root { --gb-part-gap: 5px; }
+
+/* 1. 页面骨架：主栏 / 侧栏之间、主区上下 */
+body .site-main {
+  gap: var(--gb-part-gap) !important;
+  padding-top: var(--gb-part-gap) !important;
+  padding-bottom: var(--gb-part-gap) !important;
+}
+@media (max-width: 1024px) {
+  body .site-main { gap: var(--gb-part-gap) !important; padding-top: var(--gb-part-gap) !important; }
+}
+@media (max-width: 768px) {
+  body .site-main { gap: var(--gb-part-gap) !important; }
+  body .container.site-main {
+    padding-top: var(--gb-part-gap) !important;
+    padding-bottom: var(--gb-part-gap) !important;
+  }
+}
+
+/* 2. 内容列 / 侧栏：所有直接子零件之间只留 5px，清掉各自的 margin-top 叠加。
+      这是「所有页面」的主规则，无需逐个模板登记类名。 */
+body :is(.content, .content-col) > :where(div, section, article, nav, aside, ul, ol, form, header, footer, h1, h2) {
+  margin-top: 0 !important;
+  margin-bottom: var(--gb-part-gap) !important;
+}
+body :is(.sidebar, .agg-sidebar) > :where(div, section, article, nav, aside, ul, ol, form, header, footer) {
+  margin-top: 0 !important;
+  margin-bottom: var(--gb-part-gap) !important;
+}
+/* 分段 tab 头与下方内容原本拼成同一张白卡，中间不能露灰缝 */
+body :is(.content, .content-col) > :is(.gb-list-tabs, .uc-content-tabs, .gb-tab-head) { margin-bottom: 0 !important; }
+body :is(.content, .content-col) > :is(.gb-generic-list, .link-directory, .uc-tab-panel) { margin-top: 0 !important; }
+
+/* 3. 卡片内部的独立零件 */
+body :is(.post-foot, .post-react) { margin: var(--gb-part-gap) 0 !important; }
+body .post-nav { margin: var(--gb-part-gap) 0 0 !important; gap: var(--gb-part-gap) !important; }
+body :is(.download-box, .soft-header-card, .soft-head, .soft-topics, .song-hero, .nb-tabs, .music-section) {
+  margin: 0 0 var(--gb-part-gap) !important;
+}
+body .soft-detail-head-wrap > .soft-header-card { margin-bottom: 0 !important; }
+
+/* 4. 详情主卡：26px 上下内边距会让相邻两张卡看起来「隔了一大截」，收到 5px；
+      左右内边距保留，文字不贴边。 */
+body[data-view] :is(.post-full, .comments) {
+  padding-top: var(--gb-part-gap) !important;
+  padding-bottom: var(--gb-part-gap) !important;
+}
+
+/* 5. 列表 / 聚合 / 音乐 / 软件首页 / 小说 / 用户中心的零散间距 */
+body :is(.widget, .agg-section, .agg-hero, .gb-music-reel, .gb-music-charts,
+         .gb-music-grid-head, .gb-search-head, .song-related-grid,
+         .comment-form, .comment-item, .comment-msg) {
+  margin-bottom: var(--gb-part-gap) !important;
+}
+body :is(.agg-hero, .agg-recent-list, .agg-colcards-grid, .gb-music-charts,
+         .gb-music-grid-list, .soft-head-hero, .soft-hero-side, .soft-topics-grid,
+         .song-related-grid, .nb-col, .nb-col-side,
+         .gb-pagination, .gb-song-pagination, .pagination,
+         .uc, .uc-body, .uc-panel, .uc-cols, .uc-stats) {
+  gap: var(--gb-part-gap) !important;
+}
+body :is(.gb-pagination, .gb-song-pagination, .pagination) {
+  margin-top: var(--gb-part-gap) !important;
+  margin-bottom: 0 !important;
+}
+body .uc-hero { margin-bottom: var(--gb-part-gap) !important; }
+body .content .post-card { margin-bottom: var(--gb-part-gap) !important; }
+body .gb-generic-list .post-card:last-of-type { margin-bottom: 0 !important; }
+
+/* 6. 嵌套容器里的零件：小说简介页 / 小说列表 / 图片瀑布流 / 歌曲详情页都把卡片再包一层，
+      §2 的顶层子零件规则够不到，必须在这里按容器补齐，才能和软件详情页一致。 */
+body .nb-hero { margin-bottom: var(--gb-part-gap) !important; }
+body .nb-grid { gap: var(--gb-part-gap) !important; }
+body :is(.nb-col-main, .nb-col-side) > .card { margin-bottom: var(--gb-part-gap) !important; }
+body :is(.nb-col-main, .nb-col-side) > :last-child { margin-bottom: 0 !important; }
+body .novel-grid { gap: var(--gb-part-gap) !important; margin-top: var(--gb-part-gap) !important; }
+body :is(.song-lyrics, .song-note) { margin-bottom: var(--gb-part-gap) !important; }
+/* 图片瀑布流：模板里的 14px 内联间距已移除，结构 + 间距统一在此收口 */
+body .gb-image-grid {
+  columns: 4 220px;
+  column-gap: var(--gb-part-gap) !important;
+  margin-top: var(--gb-part-gap) !important;
+}
+body .gb-image-card { margin-bottom: var(--gb-part-gap) !important; }

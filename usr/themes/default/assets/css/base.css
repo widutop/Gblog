@@ -1,0 +1,13 @@
+/* 皮肤 CSS 变量兜底：各皮肤 style.css 的 :root 定义 --primary/-dark/-light。 */
+:root {
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(20, 35, 60, .08);
+    --card: var(--bg-card, #ffffff);
+    --header-bg: var(--bg-card, #ffffff);
+    --bg-elev: var(--bg-alt, #f6f8fa);
+    --primary: #1d6fe0;
+    --primary-dark: #1655ad;
+    --primary-light: #eaf1fc;
+}
+
+.gb-icon { vertical-align: -0.125em; flex: none; display: inline-block; }

@@ -1,0 +1,14 @@
+{
+  "id": "portal-top",
+  "type": "plugin",
+  "name": "门户顶部模块（系统内置）",
+  "version": "1.2.0",
+  "author": "Gblog",
+  "desc": "系统内置组件，随程序附带、不可卸载，可随时启用或停用。它接管内置主题里写死的“首页模块开关”渲染：顶部轮播 / 栏目卡片 / 热门文章 / 软件精选的取数与呈现全部收进插件。任意主题只要在合适位置调一次 do_action('portal_top') 即可获得门户顶部；启用插件即插入，停用即消失。插件自带设置页：可设显示位置（列表内 / 整页顶部），轮播与卡片的条目可指定文章或自定义地址。",
+  "requires_core": "1.2.0",
+  "builtin": true,
+  "entry": "plugin.php",
+  "settings": "settings.php",
+  "assets": { "css": [], "js": [] },
+  "hooks": ["portal_top", "portal_top_prepare"]
+}

@@ -1,0 +1,101 @@
+/* 零图片封面占位：配色只改 :root 的 --cp-*；改后必须递增 core/theme.php 的 $ver。
+   尺寸兜底必须保持 :where()（特异性 0），否则会覆盖皮肤响应式规则；备选配色见《Gblog 开发笔记》。 */
+:root {
+    --cp-post:   #2f6fed;
+    --cp-soft:   #0f8f9c;
+    --cp-music:  #7a4bd8;
+    --cp-novel:  #c07a17;
+    --cp-image:  #17845c;
+    --cp-other:  var(--primary, #1d6fe0);
+    --cp-bg:     var(--cp-other);
+    --cp-label:  "Gblog";
+}
+[data-cover="post"]   { --cp-bg: var(--cp-post);   --cp-label: "Gblog文章"; }
+[data-cover="soft"]   { --cp-bg: var(--cp-soft);   --cp-label: "Gblog软件"; }
+[data-cover="music"]  { --cp-bg: var(--cp-music);  --cp-label: "Gblog音乐"; }
+[data-cover="novel"]  { --cp-bg: var(--cp-novel);  --cp-label: "Gblog小说"; }
+[data-cover="image"]  { --cp-bg: var(--cp-image);  --cp-label: "Gblog图片"; }
+
+/* 尺寸兜底：:where() 特异性为 0，皮肤自带规则（含响应式）优先 */
+:where(.post-card-cover-link) { display: block; overflow: hidden; }
+:where(.post-card-cover-link) img { width: 100%; aspect-ratio: 3 / 2; object-fit: cover; display: block; }
+:where(.novel-cover-lg) { width: 100%; max-width: 360px; aspect-ratio: 3 / 4; object-fit: cover; }
+:where(.novel-cover) { object-fit: cover; }
+
+.post-card-placeholder,
+.novel-cover.placeholder,
+.novel-cover-lg.placeholder,
+.gb-cover-blank,
+.gb-cover-mini,
+.mp-cover-placeholder {
+    background: var(--cp-bg);
+    color: #fff;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    overflow: hidden;
+}
+.post-card-placeholder { width: 100%; min-height: 120px; aspect-ratio: 3 / 2; }
+.post-card > .post-card-placeholder { border-radius: 8px; margin-bottom: 12px; }
+.novel-cover-lg.placeholder { width: 100%; max-width: 360px; aspect-ratio: 3 / 4; }
+.gb-cover-blank { width: 100%; aspect-ratio: 4 / 3; }
+.gb-cover-mini { width: 50px; height: 50px; border-radius: 6px; flex-shrink: 0; }
+.mp-cover-placeholder { border-radius: 8px; }
+
+.post-card-placeholder svg,
+.novel-cover.placeholder svg,
+.novel-cover-lg.placeholder svg,
+.gb-cover-blank svg,
+.gb-cover-mini svg,
+.mp-cover-placeholder svg { color: #fff; opacity: .92; flex: none; }
+.post-card-cover-link .post-card-placeholder svg { width: 30px; height: 30px; }
+.novel-cover-lg.placeholder svg { width: 42px; height: 42px; }
+.gb-cover-blank svg { width: 32px; height: 32px; }
+.gb-cover-mini svg { width: 22px; height: 22px; }
+
+.post-card-placeholder::after,
+.novel-cover.placeholder::after,
+.novel-cover-lg.placeholder::after,
+.gb-cover-blank::after {
+    content: var(--cp-label);
+    font-size: 14px;
+    line-height: 1.2;
+    letter-spacing: 1px;
+    opacity: .95;
+    white-space: nowrap;
+}
+.novel-cover-lg.placeholder::after { font-size: 16px; }
+.novel-cover.placeholder::after { font-size: 12px; letter-spacing: 0; }
+
+.agg-recent-thumb.gb-cover-agg,
+.agg-thumb.gb-cover-agg { background: var(--cp-bg); color: #fff; }
+.gb-cover-agg svg { color: #fff; opacity: .92; }
+.agg-recent-thumb.gb-cover-agg { flex-direction: column; gap: 6px; }
+.agg-recent-thumb.gb-cover-agg::after {
+    content: var(--cp-label);
+    font-size: 14px;
+    line-height: 1.2;
+    letter-spacing: 1px;
+    opacity: .95;
+    white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+    .novel-cover.placeholder::after { display: none; }
+    .post-card-placeholder::after { font-size: 12px; }
+    .agg-recent-thumb.gb-cover-agg::after { font-size: 12px; }
+}
+
+@media (prefers-color-scheme: dark) {
+    .post-card-placeholder,
+    .novel-cover.placeholder,
+    .novel-cover-lg.placeholder,
+    .gb-cover-blank,
+    .gb-cover-mini,
+    .mp-cover-placeholder,
+    .agg-recent-thumb.gb-cover-agg,
+    .agg-thumb.gb-cover-agg { filter: brightness(.88) saturate(.9); }
+}

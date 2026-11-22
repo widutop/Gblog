@@ -163,6 +163,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
 
+// 软件栏目可上传软件包：上传成功即覆盖手填下载地址，并自动估算大小（不新增数据库列）
+        if ($error === '' && $__postSiteType === 'software' && !empty($_FILES['package_upload']['tmp_name'])) {
+            $r = handle_upload($_FILES['package_upload'], 'file');
+            if (!$r['ok']) {
+                $error = '软件包上传失败：' . $r['error'];
+            } else {
+                $dlUrl = $r['url'];
+                if ($fileSize === '') $fileSize = gblog_format_bytes((int)($_FILES['package_upload']['size'] ?? 0));
+                $post['download_url'] = $dlUrl;
+                $post['file_size'] = $fileSize;
+            }
+        }
+
 // 分类必须属于所选栏目
         if ($error === '' && $categoryId > 0) {
             $stmt = $pdo->prepare("SELECT id FROM categories WHERE id = ? AND site_id = ? LIMIT 1");
@@ -220,6 +233,14 @@ $v = function (string $key, string $default = '') use ($post) {
 $gbRawContent = $v('content');
 $gbAutoMode = (trim($gbRawContent) !== '' && !preg_match('/<(p|div|h[1-6]|ul|ol|li|blockquote|pre|img|video|iframe|figure|table|section|article)\b/i', $gbRawContent)) ? 'markdown' : 'rich';
 $gbMode = gblog_pick($_POST, 'gb_editor_mode', ['rich', 'markdown'], $gbAutoMode);
+// 编辑器资源来源：全局设置 + 本地文件是否完整；本地缺失时自动用在线，避免编辑器空白。
+$gbAssetMode = get_setting('editor_assets_mode', 'online') === 'local' ? 'local' : 'online';
+$gbEditorAssetBase = gblog_web_base() . 'usr/uploads/editor/';
+$gbAssetRoot = dirname(__DIR__, 2) . '/usr/uploads/editor/';
+$gbLocalReady = is_file($gbAssetRoot . 'wangeditor/index.js')
+    && is_file($gbAssetRoot . 'wangeditor/css/style.css')
+    && is_file($gbAssetRoot . 'turndown.js');
+if ($gbAssetMode === 'local' && !$gbLocalReady) $gbAssetMode = 'online';
 ?>
 
 <?php if ($error !== ''): ?><div class="alert alert-error"><?= e($error) ?></div>
@@ -276,6 +297,18 @@ $gbMode = gblog_pick($_POST, 'gb_editor_mode', ['rich', 'markdown'], $gbAutoMode
         <label>作者</label>
         <input type="text" name="author" value="<?= e($v('author')) ?>" placeholder="作者名">
       </div>
+      <div class="form-field gb-soft-field" style="display:none;">
+        <label>软件类型</label>
+        <input type="text" name="software_type" value="<?= e($v('software_type')) ?>" placeholder="如 PHP 源码 / EXE 安装版 / 绿色软件 / 安卓 APP" maxlength="100">
+      </div>
+      <div class="form-field gb-soft-field" style="display:none;">
+        <label>软件大小</label>
+        <input type="text" name="file_size" value="<?= e($v('file_size')) ?>" placeholder="上传软件包后自动填入，也可手填" maxlength="50">
+      </div>
+      <div class="form-field gb-soft-field" style="display:none;">
+        <label>软件版本</label>
+        <input type="text" name="software_version" value="<?= e($v('software_version')) ?>" placeholder="如 V4.2.1" maxlength="60">
+      </div>
       <div class="form-field">
         <label>封面图 URL</label>
         <input type="text" name="cover" value="<?= e($v('cover')) ?>" placeholder="https:// 或留空">
@@ -303,22 +336,16 @@ $gbMode = gblog_pick($_POST, 'gb_editor_mode', ['rich', 'markdown'], $gbAutoMode
       <div class="form-field">
         <label>下载地址</label>
         <input type="text" name="download_url" value="<?= e($v('download_url')) ?>" placeholder="https:// 或上传文件">
+        <span class="hint">可填外部网盘地址，也可在下方直接上传软件包。</span>
       </div>
       <div class="form-field">
-        <label>软件大小</label>
-        <input type="text" name="file_size" value="<?= e($v('file_size')) ?>" placeholder="如 12.4 MB" maxlength="50">
-      </div>
-      <div class="form-field">
-        <label>软件类型（自由文本）</label>
-        <input type="text" name="software_type" value="<?= e($v('software_type')) ?>" placeholder="如 PHP 源码 / EXE 安装版 / 绿色软件 / 安卓 APP" maxlength="100">
+        <label>上传软件包</label>
+        <input type="file" name="package_upload" accept=".zip,.rar,.7z,.tar,.gz,.tgz,.apk,.exe,.msi,.dmg,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+        <span class="hint">上传后自动填入上方“下载地址”；不上传则保留填写的外链。</span>
       </div>
       <div class="form-field">
         <label>运行平台（自由文本）</label>
         <input type="text" name="software_platform" value="<?= e($v('software_platform')) ?>" placeholder="如 Windows 10/11 64位 / macOS / 跨平台 / 需 PHP 环境" maxlength="100">
-      </div>
-      <div class="form-field">
-        <label>软件版本</label>
-        <input type="text" name="software_version" value="<?= e($v('software_version')) ?>" placeholder="如 V4.2.1（版本号，平台填上面）" maxlength="60">
       </div>
       <div class="form-field">
         <label>官方网站</label>
@@ -342,6 +369,24 @@ $gbMode = gblog_pick($_POST, 'gb_editor_mode', ['rich', 'markdown'], $gbAutoMode
           <label style="font-weight:normal;"><input type="radio" name="gb_editor_mode" value="markdown" <?= $gbMode === 'markdown' ? 'checked' : '' ?>> Markdown（纯文本）</label>
           <button type="button" class="btn btn-sm" id="gb-md-preview-btn" <?= $gbMode === 'markdown' ? '' : 'style="display:none;"' ?>>预览 Markdown</button>
           <span class="hint" id="gb-md-hint" <?= $gbMode === 'markdown' ? '' : 'style="display:none;"' ?>>支持 # 标题、**粗体**、*斜体*、``代码``、```代码块```、[链接](https://...)、![](图片地址)、- 列表、@video 视频地址</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+          <span class="hint">编辑器资源：</span>
+          <select id="gb-editor-source" style="max-width:140px;">
+            <option value="online" <?= $gbAssetMode === 'online' ? 'selected' : '' ?>>在线 CDN</option>
+            <option value="local" <?= $gbAssetMode === 'local' ? 'selected' : '' ?>>本地服务器</option>
+          </select>
+          <span class="hint" id="gb-editor-asset-state"><?= $gbLocalReady ? ($gbAssetMode === 'local' ? '已使用本地资源' : '本地资源已安装') : '本地未安装' ?></span>
+          <button type="button" class="btn btn-sm" id="gb-editor-download">下载到本地</button>
+          <button type="button" class="btn btn-sm" id="gb-editor-upload-btn" style="display:none;">手动上传</button>
+          <input type="file" id="gb-editor-upload" multiple accept=".js,.css" style="display:none;max-width:220px;">
+        </div>
+        <div id="gb-inline-image-row" style="display:<?= $gbMode === 'rich' ? 'none' : 'flex' ?>;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap;">
+          <span class="hint" style="margin-right:2px;">Markdown 插图：</span>
+          <input type="file" id="gb-inline-image-file" accept=".jpg,.jpeg,.png,.webp,.gif" style="max-width:220px;">
+          <input type="text" id="gb-inline-image-url" placeholder="或粘贴图片地址，如 /usr/uploads/..." style="flex:1;min-width:180px;">
+          <button type="button" class="btn btn-sm" id="gb-inline-image-add">插入图片</button>
+          <span class="hint" id="gb-inline-image-msg"></span>
         </div>
         <div class="wangeditor-wrap" id="gb-rich-wrap" <?= $gbMode === 'markdown' ? 'style="display:none;"' : '' ?>>
           <div id="editor-toolbar"></div>
@@ -380,8 +425,64 @@ $gbMode = gblog_pick($_POST, 'gb_editor_mode', ['rich', 'markdown'], $gbAutoMode
   </form>
 </div>
 
-<link href="https://unpkg.com/@wangeditor/editor@5.1.23/dist/css/style.css" rel="stylesheet">
-<script src="https://unpkg.com/@wangeditor/editor@5.1.23/dist/index.js"></script>
+<script>
+// 富文本资源多 CDN 回退：任一节点可达即可加载，避免单家 CDN 被墙/超时导致编辑器空白。
+var gbEditorSource = '<?= e($gbAssetMode) ?>';
+var gbLocalReady = <?= $gbLocalReady ? 'true' : 'false' ?>;
+var gbLocalBase = '<?= e($gbEditorAssetBase) ?>';
+// 本地优先（选中且文件齐全），在线节点作为兜底；任一节点可用即可初始化编辑器。
+var gbEditorBases = (gbEditorSource === 'local' && gbLocalReady ? [gbLocalBase + 'wangeditor/'] : []).concat([
+    'https://cdn.jsdelivr.net/npm/@wangeditor/editor@5.1.23/dist/',
+    'https://npm.elemecdn.com/@wangeditor/editor@5.1.23/dist/',
+    'https://unpkg.com/@wangeditor/editor@5.1.23/dist/'
+]);
+var gbTurndownUrls = (gbEditorSource === 'local' && gbLocalReady ? [gbLocalBase + 'turndown.js'] : []).concat([
+    'https://cdn.jsdelivr.net/npm/turndown@7.2.0/dist/turndown.js',
+    'https://unpkg.com/turndown@7.2.0/dist/turndown.js'
+]);
+var gbWaiters = { editor: [], turndown: [] };
+var gbLoading = { editor: false, turndown: false };
+function gbLoadFirst(urls, key, isReady, done) {
+    if (isReady()) { done(true); return; }
+    gbWaiters[key].push(done);
+    if (gbLoading[key]) return;
+    gbLoading[key] = true;
+    var i = 0;
+    function fire() {
+        gbLoading[key] = false;
+        var list = gbWaiters[key]; gbWaiters[key] = [];
+        for (var k = 0; k < list.length; k++) list[k](isReady());
+    }
+    function next() {
+        if (i >= urls.length) { fire(); return; }
+        var url = urls[i++];
+        var s = document.createElement('script');
+        s.src = url;
+        s.onload = function () {
+            // 节点返回 200 但内容不是预期库时继续尝试下一个源，避免“加载成功却无编辑器”。
+            if (!isReady()) { next(); return; }
+            if (key === 'editor') {
+                var link = document.createElement('link');
+                link.rel = 'stylesheet';
+                link.href = url.replace(/index\.js$/, 'css/style.css');
+                document.head.appendChild(link);
+            }
+            fire();
+        };
+        s.onerror = next;
+        document.head.appendChild(s);
+    }
+    next();
+}
+function gbEditorReady(cb) {
+    gbLoadFirst(gbEditorBases.map(function (b) { return b + 'index.js'; }), 'editor',
+        function () { return !!window.wangEditor; }, cb);
+}
+function gbTurndownReady(cb) {
+    gbLoadFirst(gbTurndownUrls, 'turndown',
+        function () { return !!window.TurndownService; }, cb);
+}
+</script>
 <style>
   .w-e-toolbar { background: #f8fafc !important; border-bottom: 1px solid #e2e8f0; }
   .w-e-toolbar .w-e-toolbar-item:hover { color: #2563eb !important; }
@@ -390,10 +491,11 @@ $gbMode = gblog_pick($_POST, 'gb_editor_mode', ['rich', 'markdown'], $gbAutoMode
   .w-e-full-screen-container .w-e-toolbar { position: sticky; top: 0; z-index: 100; }
   .w-e-full-screen-container { z-index: 9999; }
 </style>
-<script src="https://cdn.jsdelivr.net/npm/turndown@7.2.0/dist/turndown.js"></script>
 <script>
 var gbEditor = null;
 var gbInitialMode = '<?= e($gbMode) ?>';
+var gbCsrf = '<?= e(csrf_token()) ?>';
+var gbUploadUrl = '<?= gblog_admin_url('content/upload_image.php') ?>';
 function gbInitEditor() {
     if (gbEditor || !window.wangEditor) return false;
     var E = window.wangEditor;
@@ -402,16 +504,51 @@ function gbInitEditor() {
         html: document.getElementById('content').value || '<p><br></p>',
         config: {
             placeholder: '请输入内容',
-            onChange: function (ed) { document.getElementById('content').value = ed.getHtml(); }
+            onChange: function (ed) { document.getElementById('content').value = ed.getHtml(); },
+            MENU_CONF: {
+                uploadImage: {
+                    // 令牌拼进 URL：wangEditor 的 extraData 不一定随 multipart 提交，
+                    // 直接放 query 最稳；服务端同时校验会话与令牌。
+                    server: gbUploadUrl + '?csrf_token=' + encodeURIComponent(gbCsrf),
+                    fieldName: 'file',
+                    extraData: { csrf_token: gbCsrf },
+                    maxFileSize: 20 * 1024 * 1024,
+                    // wangEditor 5 的签名是 customInsert(res, insertFn)，顺序不能反。
+                    customInsert: function (result, insertImgFn) {
+                        if (result && result.errno === 0 && result.data && result.data.url) {
+                            insertImgFn(result.data.url);
+                        } else {
+                            alert('图片上传失败：' + ((result && result.message) || '未知错误'));
+                        }
+                    },
+                    onError: function (xhr) {
+                        alert('图片上传失败：服务器返回 ' + (xhr && xhr.status ? xhr.status : '未知状态'));
+                    }
+                }
+            }
         },
         mode: 'default'
     });
     E.createToolbar({ editor: gbEditor, selector: '#editor-toolbar', mode: 'default' });
     return true;
 }
+function gbEnsureEditor(done) {
+    if (gbEditor) { done(true); return; }
+    if (gbInitEditor()) { done(true); return; }
+    gbEditorReady(function (ok) {
+        if (ok) gbInitEditor();
+        done(!!gbEditor);
+    });
+}
+function gbToMd(html, done) {
+    gbTurndownReady(function (ok) {
+        done(ok ? new TurndownService().turndown(html) : html);
+    });
+}
 (function () {
     if (gbInitialMode !== 'rich') return;
-    if (!gbInitEditor()) {
+    gbEnsureEditor(function (ok) {
+        if (ok) return;
         var richRadio = document.querySelector('input[name="gb_editor_mode"][value="markdown"]');
         if (richRadio) richRadio.checked = true;
         var hiddenText = document.getElementById('content').value;
@@ -419,8 +556,11 @@ function gbInitEditor() {
         document.getElementById('gb-md-wrap').style.display = '';
         document.getElementById('gb-md-preview-btn').style.display = '';
         document.getElementById('gb-md-hint').style.display = '';
-        document.getElementById('content-md').value = window.TurndownService ? new TurndownService().turndown(hiddenText) : hiddenText;
-    }
+        document.getElementById('gb-inline-image-row').style.display = 'flex';
+        var assetState = document.getElementById('gb-editor-asset-state');
+        if (assetState) { assetState.textContent = '在线资源不可用，可下载到本地'; assetState.style.color = '#c0392b'; }
+        gbToMd(hiddenText, function (md) { document.getElementById('content-md').value = md; });
+    });
 })();
 
 (function () {
@@ -431,10 +571,11 @@ function gbInitEditor() {
     var prevBtn = document.getElementById('gb-md-preview-btn');
     var hint = document.getElementById('gb-md-hint');
     var preview = document.getElementById('gb-md-preview');
+    var inlineRow = document.getElementById('gb-inline-image-row');
     var radios = document.querySelectorAll('input[name="gb_editor_mode"]');
     var form = hidden.closest('form');
     var previewUrl = '<?= gblog_admin_url('content/content_preview.php') ?>';
-    var csrf = document.querySelector('input[name="csrf_token"]').value;
+    var csrf = gbCsrf;
 
     function renderViaServer(text) {
         var fd = new FormData();
@@ -448,21 +589,26 @@ function gbInitEditor() {
         mdWrap.style.display = rich ? 'none' : '';
         prevBtn.style.display = rich ? 'none' : '';
         hint.style.display = rich ? 'none' : '';
+        if (inlineRow) inlineRow.style.display = rich ? 'none' : 'flex';
         if (!rich) preview.style.display = 'none';
     }
     function switchMode(mode) {
         if (mode === 'markdown') {
             var html = gbEditor ? gbEditor.getHtml() : hidden.value;
-            mdTa.value = window.TurndownService ? new TurndownService().turndown(html) : html;
-            hidden.value = mdTa.value;
-            setModeUI(false);
+            gbToMd(html, function (md) {
+                mdTa.value = md;
+                hidden.value = md;
+                setModeUI(false);
+            });
         } else {
-            if (!gbInitEditor()) { alert('编辑器未能加载，请检查网络能否访问 unpkg.com。'); return; }
-            renderViaServer(mdTa.value).then(function (html) {
-                gbEditor.setHtml(html);
-                hidden.value = html;
-                setModeUI(true);
-            }).catch(function () { alert('内容转换失败'); });
+            gbEnsureEditor(function (ok) {
+                if (!ok) { alert('编辑器资源加载失败，请在上方「编辑器资源」处下载到本地或手动上传。'); return; }
+                renderViaServer(mdTa.value).then(function (html) {
+                    gbEditor.setHtml(html);
+                    hidden.value = html;
+                    setModeUI(true);
+                }).catch(function () { alert('内容转换失败'); });
+            });
         }
     }
     Array.prototype.forEach.call(radios, function (r) {
@@ -477,6 +623,63 @@ function gbInitEditor() {
             preview.innerHTML = html;
             preview.style.display = 'block';
         }).catch(function () { alert('预览失败'); });
+    });
+})();
+
+// 正文区显式插图入口：富文本直接插入编辑器，Markdown 插入 ![](url) 语法。
+(function () {
+    var fileInput = document.getElementById('gb-inline-image-file');
+    var urlInput = document.getElementById('gb-inline-image-url');
+    var addBtn = document.getElementById('gb-inline-image-add');
+    var msg = document.getElementById('gb-inline-image-msg');
+    if (!fileInput || !urlInput || !addBtn || !msg) return;
+
+    function note(text, bad) {
+        msg.textContent = text;
+        msg.style.color = bad ? '#c0392b' : '#059669';
+    }
+    function putImage(url) {
+        url = String(url || '').trim();
+        if (!url) { note('请先选择图片或填写地址', true); return; }
+        var mode = document.querySelector('input[name="gb_editor_mode"]:checked').value;
+        if (mode === 'markdown') {
+            var ta = document.getElementById('content-md');
+            var from = ta.selectionStart, to = ta.selectionEnd;
+            var snippet = '![](' + url + ')\n';
+            ta.value = ta.value.slice(0, from) + snippet + ta.value.slice(to);
+            ta.focus();
+            ta.selectionStart = ta.selectionEnd = from + snippet.length;
+            note('已插入 Markdown 图片', false);
+            return;
+        }
+        gbEnsureEditor(function (ok) {
+            if (!ok) { note('编辑器资源加载失败，请在上方下载到本地', true); return; }
+            var html = '<img src="' + url.replace(/"/g, '&quot;') + '" alt="">';
+            if (typeof gbEditor.insertHtml === 'function') gbEditor.insertHtml(html);
+            else gbEditor.setHtml(gbEditor.getHtml() + html);
+            note('已插入图片', false);
+        });
+    }
+
+    addBtn.addEventListener('click', function () { putImage(urlInput.value); });
+    fileInput.addEventListener('change', function () {
+        if (!fileInput.files || !fileInput.files[0]) return;
+        var fd = new FormData();
+        fd.append('csrf_token', gbCsrf);
+        fd.append('file', fileInput.files[0]);
+        note('正在上传…', false);
+        fetch(gbUploadUrl, { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (res && res.errno === 0 && res.data && res.data.url) {
+                    urlInput.value = res.data.url;
+                    putImage(res.data.url);
+                } else {
+                    note('上传失败：' + ((res && res.message) || '未知错误'), true);
+                }
+            })
+            .catch(function () { note('上传失败，请重试', true); });
+        fileInput.value = '';
     });
 })();
 
@@ -496,12 +699,82 @@ function toggleDownloadFields(fromChange) {
             return;
         }
     }
-    document.getElementById('download-fields').style.display = (type === 'software') ? '' : 'none';
+    var isSoft = type === 'software';
+    document.getElementById('download-fields').style.display = isSoft ? '' : 'none';
+    var softFields = document.querySelectorAll('.gb-soft-field');
+    for (var i = 0; i < softFields.length; i++) softFields[i].style.display = isSoft ? '' : 'none';
     var crumb = document.querySelector('.admin-breadcrumb');
     if (crumb) crumb.textContent = '<?= e($__titleVerb) ?>' + (opt.getAttribute('data-label') || '文章');
     gbLastSite = sel.value;
 }
 toggleDownloadFields(false);
+
+// 编辑器资源来源：在线/本地切换、一键下载、下载失败时手动上传。
+(function () {
+    var sel = document.getElementById('gb-editor-source');
+    var state = document.getElementById('gb-editor-asset-state');
+    var dl = document.getElementById('gb-editor-download');
+    var upBtn = document.getElementById('gb-editor-upload-btn');
+    var up = document.getElementById('gb-editor-upload');
+    var api = '<?= gblog_admin_url('content/editor_assets.php') ?>';
+    if (!sel || !state || !dl || !upBtn || !up) return;
+    function say(text, bad) {
+        state.textContent = text;
+        state.style.color = bad ? '#c0392b' : '#059669';
+    }
+    function post(fields, done) {
+        var fd = new FormData();
+        fd.append('csrf_token', gbCsrf);
+        for (var k in fields) if (Object.prototype.hasOwnProperty.call(fields, k)) fd.append(k, fields[k]);
+        fetch(api, { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(done)
+            .catch(function () { done({ ok: false, message: '请求失败，请重试' }); });
+    }
+    say(gbLocalReady ? (gbEditorSource === 'local' ? '已使用本地资源' : '本地资源已安装') : '本地未安装', !gbLocalReady);
+    dl.addEventListener('click', function () {
+        dl.disabled = true;
+        say('正在下载编辑器资源…', false);
+        post({ action: 'download' }, function (res) {
+            dl.disabled = false;
+            if (res && res.ok) { say('下载完成，正在刷新…', false); location.reload(); }
+            else {
+                say((res && res.message) || '下载失败', true);
+                upBtn.style.display = '';
+                up.style.display = '';
+            }
+        });
+    });
+    sel.addEventListener('change', function () {
+        if (sel.value === 'local' && !gbLocalReady) {
+            if (!confirm('本地资源尚未安装，是否现在下载到服务器？')) { sel.value = 'online'; return; }
+            dl.click();
+            return;
+        }
+        post({ action: 'mode', mode: sel.value }, function (res) {
+            if (res && res.ok) { say('已切换，正在刷新…', false); location.reload(); }
+            else say((res && res.message) || '切换失败', true);
+        });
+    });
+    upBtn.addEventListener('click', function () {
+        up.style.display = up.style.display === 'none' ? '' : 'none';
+    });
+    up.addEventListener('change', function () {
+        if (!up.files || !up.files.length) return;
+        var fd = new FormData();
+        fd.append('csrf_token', gbCsrf);
+        fd.append('action', 'upload');
+        for (var i = 0; i < up.files.length; i++) fd.append('file[]', up.files[i]);
+        say('正在上传…', false);
+        fetch(api, { method: 'POST', body: fd, credentials: 'same-origin' })
+            .then(function (r) { return r.json(); })
+            .then(function (res) {
+                if (res && res.ok) { say('上传完成，正在刷新…', false); location.reload(); }
+                else say((res && res.message) || '上传失败', true);
+            })
+            .catch(function () { say('上传失败，请重试', true); });
+    });
+})();
 </script>
 
 <?php require __DIR__ . '/../inc/footer.php'; ?>

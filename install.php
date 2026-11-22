@@ -317,8 +317,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $step === 3) {
         $cfg .= "define('UPLOAD_DIR', GBLOG_ROOT . '/usr/uploads');\n";
         $cfg .= "define('UPLOAD_URL', '/usr/uploads');\n";
         $cfg .= "define('MAX_UPLOAD_SIZE', 20 * 1024 * 1024);\n";
+        $cfg .= "define('MAX_FILE_UPLOAD_SIZE', 100 * 1024 * 1024);\n";
         $cfg .= "define('ALLOWED_AUDIO_EXT', ['mp3','m4a','ogg','wav']);\n";
         $cfg .= "define('ALLOWED_IMAGE_EXT', ['jpg','jpeg','png','webp','gif']);\n";
+        $cfg .= "define('ALLOWED_FILE_EXT', ['zip','rar','7z','tar','gz','tgz','apk','exe','msi','dmg','pdf','doc','docx','xls','xlsx','ppt','pptx']);\n";
         $cfg .= "define('THEMES_DIR', GBLOG_ROOT . '/usr/themes');\n";
         $cfg .= "define('ADMIN_SESSION_TTL', 7200);\n";
         $cfg .= "\ndate_default_timezone_set('Asia/Shanghai');\n";

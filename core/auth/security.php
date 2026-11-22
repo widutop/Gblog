@@ -594,7 +594,8 @@ function gblog_admin_page_cap(string $page): ?string
     $map = [
         'index.php' => 'post.view', 'post_edit.php' => 'post.edit', 'post_delete.php' => 'post.delete',
         'song_edit.php' => 'song.edit', 'song_delete.php' => 'song.delete',
-        'content_preview.php' => 'post.edit',
+        'content_preview.php' => 'post.edit', 'upload_image.php' => 'post.edit',
+        'editor_assets.php' => 'post.edit',
         'novel_chapters.php' => 'post.edit', 'comments.php' => 'comment.manage',
         'users.php' => 'user.manage', 'sites.php' => 'settings.manage',
         'themes.php' => 'settings.manage',
